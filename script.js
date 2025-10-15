@@ -53,7 +53,6 @@ document.getElementById('logout-btn').addEventListener('click', () => auth.signO
 window.showView = function(viewId) {
     views.forEach(view => view.classList.toggle('hidden', view.id !== viewId));
     navButtons.forEach(btn => btn.classList.toggle('active', btn.getAttribute('onclick').includes(viewId)));
-    // 當切換到比對頁面時，自動執行比對功能
     if (viewId === 'compare-view') runComparison();
 };
 
@@ -77,13 +76,17 @@ ocrFileInput.addEventListener('change', async (event) => {
     const user = auth.currentUser;
     if (!file || !user) return;
 
+    if (!file.type.startsWith('image/')) return alert('請上傳圖片檔案！');
+    if (file.size > 5 * 1024 * 1024) return alert('圖片檔案大小不能超過 5MB！');
+
     imagePreview.src = URL.createObjectURL(file);
     imagePreview.style.display = 'block';
     assetIdInput.placeholder = '圖片上傳中...';
     scanBtn.disabled = true;
 
-    const fileName = `${Date.now()}-${user.uid}.jpg`;
-    const filePath = `uploads/${fileName}`;
+    // 修正後的檔名與路徑
+    const fileName = `${Date.now()}-${file.name}`;
+    const filePath = `users/${user.uid}/${fileName}`;
     const storageRef = storage.ref(filePath);
 
     try {
@@ -95,24 +98,23 @@ ocrFileInput.addEventListener('change', async (event) => {
             if (doc.exists) {
                 const data = doc.data();
                 const detectedAssetId = data.assetId;
-
                 if (detectedAssetId === "COULD_NOT_DETECT") {
                     assetIdInput.value = '';
                     assetIdInput.placeholder = '辨識失敗，請手動輸入';
                     alert('後端 OCR 辨識失敗，請確認標籤是否清晰可見。');
                 } else {
                     assetIdInput.value = detectedAssetId;
+                    assetIdInput.placeholder = '掃描結果會顯示於此';
                 }
-                
                 scanBtn.disabled = false;
                 ocrFileInput.value = '';
                 unsubscribe();
             }
         });
 
-        setTimeout(() => { // 20秒超時
+        setTimeout(() => {
             unsubscribe();
-            if (scanBtn.disabled) { // 檢查是否仍在禁用狀態，避免重複執行
+            if (scanBtn.disabled) {
                  scanBtn.disabled = false;
                  assetIdInput.placeholder = '辨識超時，請重試';
             }
@@ -245,7 +247,7 @@ uploadCsvBtn.addEventListener('click', () => {
                     alert(`成功匯入 ${count} 筆財產資料！`);
                 }).catch(err => uploadStatus.textContent = `上傳失敗: ${err.message}`);
             } else {
-                uploadStatus.textContent = 'CSV 檔案中未找到有效資料。';
+                uploadStatus.textContent = 'CSV 檔案中未找到符合「財產編號」、「財產名稱」、「存放地點」的有效資料。';
             }
         },
         error: (err) => uploadStatus.textContent = `檔案解析失敗: ${err.message}`
@@ -324,7 +326,7 @@ document.getElementById('download-btn').addEventListener('click', async () => {
     if (dataToDownload.length === 0) return alert('沒有符合條件的資料可供下載。');
 
     const csv = Papa.unparse(dataToDownload);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' }); // \uFEFF for Excel compatibility
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `盤點資料_${filterValue}_${new Date().toISOString().slice(0,10)}.csv`;
