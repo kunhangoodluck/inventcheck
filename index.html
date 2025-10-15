@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學校財產盤點系統</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>學校財產盤點系統</h1>
+        <div id="auth-container">
+            <span id="user-display"></span>
+            <button id="login-btn">使用 Google 登入</button>
+            <button id="logout-btn" class="hidden">登出</button>
+        </div>
+    </header>
+
+    <nav id="main-nav" class="hidden">
+        <button onclick="showView('inventory-view')" class="active">盤點輸入</button>
+        <button onclick="showView('results-view')">盤點結果</button>
+        <button onclick="showView('upload-view')">上傳資料</button>
+        <button onclick="showView('compare-view')">比對資料</button>
+        <button onclick="showView('download-view')">下載資料</button>
+    </nav>
+
+    <main id="app-container" class="hidden">
+        <section id="inventory-view" class="view">
+            <h2>1. 盤點輸入</h2>
+            <div class="form-group">
+                <label for="location">存放地點</label>
+                <input type="text" id="location" placeholder="例如：電腦教室 (一)">
+            </div>
+            <div class="form-group">
+                <label for="asset-name">財產名稱</label>
+                <input type="text" id="asset-name" placeholder="例如：電腦主機">
+            </div>
+            <div class="form-group scan-group">
+                <label for="scan-input">掃描盤點 (OCR)</label>
+                <p class="description">點擊按鈕後，使用相機對準財產標籤上的編號。</p>
+                <input type="file" id="ocr-file-input" accept="image/*" capture="environment" style="display: none;">
+                <button id="scan-btn">📷 掃描財產編號</button>
+                <img id="image-preview" src="" alt="圖片預覽" style="display:none; max-width: 100%; margin-top: 10px;">
+            </div>
+             <div class="form-group">
+                <label for="asset-id">人工輸入 (財產編號)</label>
+                <input type="text" id="asset-id" placeholder="掃描結果會顯示於此">
+            </div>
+            <button id="log-asset-btn" class="primary-btn">登錄財產</button>
+        </section>
+
+        <section id="results-view" class="view hidden">
+            <h2>2. 財產盤點結果</h2>
+            <div id="results-list"></div>
+        </section>
+
+        <section id="upload-view" class="view hidden">
+            <h2>3. 上傳財產總表 (CSV)</h2>
+            <input type="file" id="csv-file" accept=".csv">
+            <button id="upload-csv-btn" class="primary-btn">上傳並匯入</button>
+            <div id="upload-status"></div>
+        </section>
+
+        <section id="compare-view" class="view hidden">
+            <h2>4. 比對資料</h2>
+            <table id="compare-table">
+                <thead>
+                    <tr><th>狀態</th><th>財產編號</th><th>財產名稱</th><th>存放地點</th><th>盤點日期</th></tr>
+                </thead>
+                <tbody id="compare-table-body"></tbody>
+            </table>
+        </section>
+
+        <section id="download-view" class="view hidden">
+            <h2>5. 下載資料</h2>
+            <select id="status-filter">
+                <option value="all">全部</option>
+                <option value="completed">僅盤點完成</option>
+                <option value="pending">僅未盤點</option>
+            </select>
+            <button id="download-btn" class="primary-btn">下載 CSV 檔案</button>
+        </section>
+    </main>
+
+    <div id="edit-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>編輯盤點紀錄</h2>
+            <input type="hidden" id="edit-doc-id">
+            <div class="form-group"><label for="edit-asset-id">財產編號</label><input type="text" id="edit-asset-id" readonly></div>
+            <div class="form-group"><label for="edit-asset-name">財產名稱</label><input type="text" id="edit-asset-name"></div>
+            <div class="form-group"><label for="edit-location">存放地點</label><input type="text" id="edit-location"></div>
+            <div class="form-group"><label for="edit-remarks">備註</label><textarea id="edit-remarks" rows="3"></textarea></div>
+            <div class="modal-actions">
+                <button id="save-edit-btn" class="primary-btn">儲存變更</button>
+                <button id="cancel-edit-btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>
