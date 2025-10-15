@@ -20,7 +20,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// 全域 DOM 元素
+// --- 全域 DOM 元素 ---
 const userDisplay = document.getElementById('user-display');
 const mainContainer = document.getElementById('app-container');
 const mainNav = document.getElementById('main-nav');
@@ -53,10 +53,11 @@ document.getElementById('logout-btn').addEventListener('click', () => auth.signO
 window.showView = function(viewId) {
     views.forEach(view => view.classList.toggle('hidden', view.id !== viewId));
     navButtons.forEach(btn => btn.classList.toggle('active', btn.getAttribute('onclick').includes(viewId)));
-    if (viewId === 'compare-view') runComparison(); // Special case for compare view
+    // 當切換到比對頁面時，自動執行比對功能
+    if (viewId === 'compare-view') runComparison();
 };
 
-// --- INVENTORY (盤點介面) ---
+// --- INVENTORY (盤點介面 - VIEW 1) ---
 const locationInput = document.getElementById('location');
 const assetNameInput = document.getElementById('asset-name');
 const assetIdInput = document.getElementById('asset-id');
@@ -87,15 +88,21 @@ ocrFileInput.addEventListener('change', async (event) => {
 
     try {
         await storageRef.put(file);
-        assetIdInput.placeholder = '辨識中...';
+        assetIdInput.placeholder = '圖片上傳成功，辨識中...';
         
         const resultDocRef = db.collection("ocr_results").doc(fileName);
-        const unsubscribe = resultDocRef.onSnapshot({ includeMetadataChanges: true }, (doc) => {
+        const unsubscribe = resultDocRef.onSnapshot((doc) => {
             if (doc.exists) {
-                const { assetId, error } = doc.data();
-                assetIdInput.value = error ? '' : (assetId || '');
-                assetIdInput.placeholder = error || '辨識失敗';
-                if (error) alert(error);
+                const data = doc.data();
+                const detectedAssetId = data.assetId;
+
+                if (detectedAssetId === "COULD_NOT_DETECT") {
+                    assetIdInput.value = '';
+                    assetIdInput.placeholder = '辨識失敗，請手動輸入';
+                    alert('後端 OCR 辨識失敗，請確認標籤是否清晰可見。');
+                } else {
+                    assetIdInput.value = detectedAssetId;
+                }
                 
                 scanBtn.disabled = false;
                 ocrFileInput.value = '';
@@ -103,11 +110,12 @@ ocrFileInput.addEventListener('change', async (event) => {
             }
         });
 
-        setTimeout(() => { // Timeout
+        setTimeout(() => { // 20秒超時
             unsubscribe();
-            if (!scanBtn.disabled) return;
-            scanBtn.disabled = false;
-            assetIdInput.placeholder = '辨識超時，請重試';
+            if (scanBtn.disabled) { // 檢查是否仍在禁用狀態，避免重複執行
+                 scanBtn.disabled = false;
+                 assetIdInput.placeholder = '辨識超時，請重試';
+            }
         }, 20000);
 
     } catch (err) {
@@ -124,11 +132,14 @@ document.getElementById('log-asset-btn').addEventListener('click', () => {
         assetId: assetIdInput.value.trim(),
     };
     if (Object.values(data).some(v => !v)) return alert('所有欄位皆為必填！');
+    
+    const user = auth.currentUser;
+    if (!user) return alert('請先登入！');
 
     db.collection('inventory_log').add({
         ...data,
         remarks: "",
-        userId: auth.currentUser.uid,
+        userId: user.uid,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
         alert(`財產 [${data.assetId}] 已成功登錄！`);
@@ -139,7 +150,7 @@ document.getElementById('log-asset-btn').addEventListener('click', () => {
     }).catch(err => console.error("Log failed:", err));
 });
 
-// --- RESULTS (盤點結果) & EDIT MODAL ---
+// --- RESULTS (盤點結果 - VIEW 2) & EDIT MODAL ---
 const resultsList = document.getElementById('results-list');
 const editModal = document.getElementById('edit-modal');
 const editInputs = {
@@ -151,7 +162,9 @@ const editInputs = {
 };
 
 function loadInventoryResults() {
-    db.collection('inventory_log').where('userId', '==', auth.currentUser.uid)
+    const user = auth.currentUser;
+    if (!user) return;
+    db.collection('inventory_log').where('userId', '==', user.uid)
       .orderBy('timestamp', 'desc').onSnapshot(snapshot => {
         resultsList.innerHTML = snapshot.empty ? '<p>尚無盤點紀錄。</p>' : '';
         snapshot.forEach(doc => {
@@ -199,5 +212,123 @@ document.getElementById('save-edit-btn').addEventListener('click', () => {
       .catch(err => console.error("Update failed:", err));
 });
 
-// 其他功能 (上傳, 比對, 下載)
-// 此處省略以保持簡潔，但您可以將先前版本的功能代碼貼回此處
+// --- UPLOAD (上傳資料 - VIEW 3) ---
+const csvFileInput = document.getElementById('csv-file');
+const uploadCsvBtn = document.getElementById('upload-csv-btn');
+const uploadStatus = document.getElementById('upload-status');
+
+uploadCsvBtn.addEventListener('click', () => {
+    const file = csvFileInput.files[0];
+    const user = auth.currentUser;
+    if (!file) return alert('請選擇一個 CSV 檔案！');
+    if (!user) return alert('請先登入！');
+
+    Papa.parse(file, {
+        header: true, skipEmptyLines: true,
+        complete: (results) => {
+            uploadStatus.textContent = '開始上傳資料...';
+            const batch = db.batch();
+            let count = 0;
+            results.data.forEach(row => {
+                const assetId = row['財產編號']?.trim();
+                const assetName = row['財產名稱']?.trim();
+                const location = row['存放地點']?.trim();
+                if (assetId && assetName && location) {
+                    const docRef = db.collection('master_assets').doc(assetId);
+                    batch.set(docRef, { assetId, assetName, location, status: '未盤點', lastInventoried: null, ownerId: user.uid });
+                    count++;
+                }
+            });
+            if (count > 0) {
+                batch.commit().then(() => {
+                    uploadStatus.textContent = `成功匯入 ${count} 筆財產資料！`;
+                    alert(`成功匯入 ${count} 筆財產資料！`);
+                }).catch(err => uploadStatus.textContent = `上傳失敗: ${err.message}`);
+            } else {
+                uploadStatus.textContent = 'CSV 檔案中未找到有效資料。';
+            }
+        },
+        error: (err) => uploadStatus.textContent = `檔案解析失敗: ${err.message}`
+    });
+});
+
+// --- COMPARE (比對資料 - VIEW 4) ---
+async function runComparison() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const tableBody = document.getElementById('compare-table-body');
+    tableBody.innerHTML = '<tr><td colspan="5">資料載入中...</td></tr>';
+
+    try {
+        const masterAssetsSnapshot = await db.collection('master_assets').where('ownerId', '==', user.uid).get();
+        const inventoryLogSnapshot = await db.collection('inventory_log').where('userId', '==', user.uid).get();
+
+        const inventoriedItems = new Map();
+        inventoryLogSnapshot.forEach(doc => {
+            const data = doc.data();
+            if (!inventoriedItems.has(data.assetId) || inventoriedItems.get(data.assetId) < data.timestamp.toDate()) {
+                 inventoriedItems.set(data.assetId, data.timestamp.toDate());
+            }
+        });
+        
+        tableBody.innerHTML = '';
+        if (masterAssetsSnapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="5">請先上傳財產總表。</td></tr>';
+            return;
+        }
+
+        masterAssetsSnapshot.forEach(doc => {
+            const asset = doc.data();
+            const isInventoried = inventoriedItems.has(asset.assetId);
+            const inventoryDate = isInventoried ? inventoriedItems.get(asset.assetId) : null;
+            
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td><span class="status-${isInventoried ? 'completed' : 'pending'}">${isInventoried ? '盤點完成' : '未盤點'}</span></td>
+                <td>${asset.assetId}</td>
+                <td>${asset.assetName}</td>
+                <td>${asset.location}</td>
+                <td>${inventoryDate ? inventoryDate.toLocaleDateString() : 'N/A'}</td>
+            `;
+        });
+    } catch (err) {
+        console.error("比對資料時發生錯誤:", err);
+        tableBody.innerHTML = '<tr><td colspan="5">載入資料失敗，請稍後再試。</td></tr>';
+    }
+}
+
+// --- DOWNLOAD (下載資料 - VIEW 5) ---
+document.getElementById('download-btn').addEventListener('click', async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    
+    alert('正在準備下載資料...');
+
+    const masterAssetsSnapshot = await db.collection('master_assets').where('ownerId', '==', user.uid).get();
+    const inventoryLogSnapshot = await db.collection('inventory_log').where('userId', '==', user.uid).get();
+
+    const inventoriedIds = new Set(inventoryLogSnapshot.docs.map(doc => doc.data().assetId));
+    let dataToDownload = [];
+    const filterValue = document.getElementById('status-filter').value;
+
+    masterAssetsSnapshot.forEach(doc => {
+        const asset = doc.data();
+        const isCompleted = inventoriedIds.has(asset.assetId);
+        const shouldInclude = (filterValue === 'all') || (filterValue === 'completed' && isCompleted) || (filterValue === 'pending' && !isCompleted);
+        if (shouldInclude) {
+            dataToDownload.push({ '存放地點': asset.location, '財產名稱': asset.assetName, '財產編號': asset.assetId });
+        }
+    });
+
+    if (dataToDownload.length === 0) return alert('沒有符合條件的資料可供下載。');
+
+    const csv = Papa.unparse(dataToDownload);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `盤點資料_${filterValue}_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
