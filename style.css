@@ -74,21 +74,12 @@ main {
     font-weight: bold;
 }
 
-.form-group .description {
-    font-size: 0.85rem;
-    color: var(--secondary-color);
-    margin-top: 0.25rem;
-}
-
-input[type="text"],
-input[type="file"],
-select,
-textarea {
+input, select, textarea {
     width: 100%;
     padding: 0.8rem;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    box-sizing: border-box; /* 確保 padding 不會撐爆寬度 */
+    box-sizing: border-box;
     font-size: 1rem;
     font-family: inherit;
 }
@@ -101,28 +92,18 @@ button {
     color: var(--primary-color);
     cursor: pointer;
     font-size: 1rem;
-    transition: all 0.2s ease;
-}
-
-button:hover {
-    background-color: var(--primary-color);
-    color: #fff;
 }
 
 .primary-btn {
     background-color: var(--primary-color);
     color: #fff;
     width: 100%;
-    font-weight: bold;
 }
 
 nav button {
     background: none;
     border: none;
     padding: 0.8rem 0.5rem;
-    font-size: 0.9rem;
-    color: var(--secondary-color);
-    cursor: pointer;
     border-bottom: 2px solid transparent;
 }
 
@@ -137,16 +118,6 @@ nav button.active {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     margin-bottom: 1rem;
-}
-
-#results-list .result-item .info p {
-    margin: 0.25rem 0;
-}
-
-#results-list .result-item .actions {
-    margin-top: 0.8rem;
-    display: flex;
-    gap: 0.5rem; /* 給按鈕間距 */
 }
 
 /* 編輯視窗 (Modal) */
@@ -169,44 +140,4 @@ nav button.active {
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 1.5rem;
-    gap: 0.5rem;
-}
-
-#edit-asset-id[readonly] {
-    background-color: #e9ecef;
-    cursor: not-allowed;
-}
-
-/* 比對表格 */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-}
-
-th, td {
-    border: 1px solid var(--border-color);
-    padding: 0.8rem;
-    text-align: left;
-    font-size: 0.9rem;
-}
-
-th {
-    background-color: var(--background-color);
-}
-
-.status-completed {
-    color: var(--success-color);
-    font-weight: bold;
-}
-
-.status-pending {
-    color: var(--pending-color);
-    font-weight: bold;
 }
