@@ -1,143 +1,55 @@
-/*
- * =================================
- * 學校財產盤點系統 - 樣式表 (style.css)
- * =================================
-*/
-
-/* --- 1. 全域變數與基本設定 --- */
-:root {
-    --primary-color: #007bff;
-    --secondary-color: #6c757d;
-    --background-color: #f8f9fa;
-    --text-color: #333;
-    --border-color: #ddd;
-    --success-color: #28a745;
-    --pending-color: #ffc107;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: var(--background-color);
-    color: var(--text-color);
-}
-
-/* --- 2. 佈局結構 (Layout) --- */
-header {
-    background-color: #fff;
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-}
-
-header h1 {
-    font-size: 1.2rem;
-    margin: 0;
-    color: var(--primary-color);
-}
-
-nav {
-    display: flex;
-    justify-content: space-around;
-    background-color: #fff;
-    padding: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-main {
-    padding: 1rem;
-}
-
-/* --- 3. 通用元件 (Components) --- */
-.view {
-    background-color: #fff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* 這是隱藏的關鍵！ */
-.hidden {
-    display: none;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-}
-
-input, select, textarea {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1rem;
-    font-family: inherit;
-}
-
-button {
-    padding: 0.8rem 1.2rem;
-    border-radius: 4px;
-    border: 1px solid var(--primary-color);
-    background-color: #fff;
-    color: var(--primary-color);
-    cursor: pointer;
-    font-size: 1rem;
-}
-
-.primary-btn {
-    background-color: var(--primary-color);
-    color: #fff;
-    width: 100%;
-}
-
-nav button {
-    background: none;
-    border: none;
-    padding: 0.8rem 0.5rem;
-    border-bottom: 2px solid transparent;
-}
-
-nav button.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-}
-
-/* --- 4. 特定區塊樣式 --- */
-#results-list .result-item {
-    padding: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    margin-bottom: 1rem;
-}
-
-/* 編輯視窗 (Modal) */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-}
+:root { --primary-color: #007bff; --secondary-color: #6c757d; --background-color: #f8f9fa; --text-color: #333; --border-color: #ddd; --success-color: #28a745; --pending-color: #ffc107; --danger-color: #dc3545; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background-color: var(--background-color); color: var(--text-color); }
+#app { max-width: 800px; margin: 0 auto; }
+header { background-color: #fff; padding: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+header h1 { font-size: 1.2rem; margin: 0; color: var(--primary-color); }
+#auth-container { display: flex; align-items: center; gap: 1rem; }
+nav { display: flex; flex-wrap: wrap; /* 允許換行 */ justify-content: space-around; background-color: #fff; padding: 0.5rem; border-bottom: 1px solid var(--border-color); }
+nav button { background: none; border: none; padding: 0.8rem 0.5rem; font-size: 0.9rem; color: var(--secondary-color); cursor: pointer; border-bottom: 2px solid transparent; flex-shrink: 0; /* 防止按鈕被壓縮 */ }
+nav button.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: bold; }
+main { padding: 1rem; }
+.view { background-color: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.form-group { margin-bottom: 1.5rem; }
+.form-group label, fieldset legend { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+.form-group .description { font-size: 0.85rem; color: var(--secondary-color); margin-top: 0.25rem; }
+input, select, textarea { width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
+input[type="file"] { padding: 0.2rem; }
+button { padding: 0.8rem 1.2rem; border-radius: 4px; border: 1px solid var(--primary-color); background-color: #fff; color: var(--primary-color); cursor: pointer; font-size: 1rem; transition: background-color 0.2s; }
+button:hover { background-color: #e9f3ff; }
+button:disabled { background-color: #e9ecef; color: #6c757d; border-color: #ddd; cursor: not-allowed; }
+.primary-btn { background-color: var(--primary-color); color: #fff; width: 100%; }
+.primary-btn:hover { background-color: #0069d9; }
+.secondary-btn { background-color: #6c757d; border-color: #6c757d; color: #fff; }
+.secondary-btn:hover { background-color: #5a6268; }
+.small-btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+.result-item, .list-inventory-item { padding: 1rem; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+.result-item .info p, .list-inventory-item .info p { margin: 0.25rem 0; }
+.result-item .actions, .list-inventory-item .actions { margin-top: 0rem; display: flex; gap: 0.5rem; flex-shrink: 0; margin-left: 1rem; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background-color: #fff; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; }
+.modal-actions { display: flex; justify-content: flex-end; margin-top: 1.5rem; gap: 0.5rem; }
+.upload-status, .loading-overlay { margin-top: 1rem; color: var(--secondary-color); text-align: center; }
+.comparison-table-container { margin-top: 1.5rem; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid var(--border-color); padding: 0.8rem; text-align: left; }
+th { background-color: var(--background-color); }
+.status-completed { color: var(--success-color); font-weight: bold; }
+.status-pending { color: var(--pending-color); font-weight: bold; }
+.divider { border: none; border-top: 1px solid #eee; margin: 2rem 0; }
+.danger-zone .description { color: var(--danger-color); }
+.danger-btn { background-color: var(--danger-color); border-color: var(--danger-color); color: #fff; width: 100%; }
+.danger-btn:hover { background-color: #c82333; }
+.segmented-input .input-row { display: flex; gap: 5px; align-items: center; }
+.segmented-input input { text-align: center; }
+.segmented-input span { color: var(--secondary-color); }
+.clear-btn-container { text-align: right; margin-top: -1rem; margin-bottom: 1rem; }
+.remarks-section { margin-top: 1.5rem; }
+/* --- 新增：智慧清單樣式 --- */
+.list-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem; flex-wrap: wrap; }
+.filter-input { flex-grow: 1; min-width: 150px; }
+.batch-actions button { width: auto; } /* 讓批次按鈕寬度自適應 */
+.list-inventory-item input[type="checkbox"] { width: auto; margin-right: 0.5rem; transform: scale(1.2); }
+.list-inventory-item.inventoried { background-color: #f8f9fa; opacity: 0.7; }
+.list-inventory-item.inventoried .info p { text-decoration: line-through; color: var(--secondary-color); }
+.list-inventory-item.inventoried .actions button,
+.list-inventory-item.inventoried input[type="checkbox"] { cursor: not-allowed; }
